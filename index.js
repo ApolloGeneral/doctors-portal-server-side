@@ -18,11 +18,28 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const appointmentOptionsCollection = client.db("doctorsPortal").collection("appointmentOptions")
+        const bookingCollection = client.db("doctorsPortal").collection("bookings")
         
         app.get('/appointmentOptions',async (req, res)=>{
+            const date = req.query.date;
+            console.log(date);
             const query = {};
             const options = await appointmentOptionsCollection.find(query).toArray();
+            const bookingQuery={appointmentDate: date}
+            const alreadyBooked= await bookingCollection.find(bookingQuery).toArray();
+            options.forEach(option=>{
+                const optionBooked= alreadyBooked.filter(book=> book.treatment=== option.name  )
+                const bookedSlots= optionBooked.map(book=> book.slot )
+                console.log(date , option.name, bookedSlots)
+            })
             res.send(options)
+        })
+
+        app.post('/bookings', async(req, res)=>{
+            const booking= req.body
+            // console.log(booking)
+            const result= await bookingCollection.insertOne(booking)
+            res.send(result)
         })
     } finally {
         
