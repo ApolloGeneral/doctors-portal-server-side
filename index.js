@@ -81,6 +81,12 @@ async function run() {
             const bookings= await bookingCollection.find(query).toArray();
             res.send(bookings)
         })
+        app.get('/bookings/:id', async(req,res)=>{
+            const id= req.params.id;
+            const query={_id: ObjectId(id)}
+            const booking= await bookingCollection.findOne(query);
+            res.send(booking)
+        })
 
         app.post('/bookings', async(req, res)=>{
             const booking= req.body
