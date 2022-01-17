@@ -39,8 +39,13 @@ async function run() {
         const usersCollection = client.db("doctorsPortal").collection("users")
         const doctorsCollection = client.db("doctorsPortal").collection("doctors")
         
-        const verifyAdmin=(req, res, next)=>{
-            console.log('inside verifyAdmin ', req.decoded.email )
+        const verifyAdmin=async(req, res, next)=>{
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail }
+            const user = await usersCollection.findOne(query)
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ message: "Forbidden Access " })
+            }
             next();
         }
         app.get('/appointmentOptions',async (req, res)=>{
@@ -123,13 +128,7 @@ async function run() {
             const result= await usersCollection.insertOne(user);
             res.send(result);
         })
-        app.put('/users/admin/:id', verifyJWT, async(req, res)=>{
-            const decodedEmail= req.decoded.email;
-            const query = {email: decodedEmail}
-            const user= await usersCollection.findOne(query)
-            if(user?.role !=='admin'){
-                return res.status(403).send({message: "Forbidden Access "})
-            }
+        app.put('/users/admin/:id', verifyJWT, verifyAdmin, async(req, res)=>{            
             const id= req.params.id;
             const filter= {_id:(ObjectId(id))}
             const options = { upsert: true };
